@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Бабки-менеджмент</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper: #EDE7DA;
+    --paper-raised: #F5F1E7;
+    --ink: #23262B;
+    --ink-soft: #5B5C58;
+    --navy: #2C3A4F;
+    --brass: #A9793B;
+    --brass-soft: #E4D2AC;
+    --moss: #5F7A5A;
+    --moss-soft: #DCE6D9;
+    --clay: #A9573F;
+    --clay-soft: #EEDAD1;
+    --line: #D8D0BE;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    padding:20px 16px 40px;
+    min-height:100vh;
+  }
+
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    margin:0;
+  }
+
+  header.top{
+    padding-bottom:16px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  header.top h1{
+    font-size:26px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  header.top .date{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  .summary{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .stat{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:12px 14px;
+  }
+  .stat .label{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .stat .value{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:600;
+  }
+  .stat.income .value{color:var(--moss);}
+  .stat.expense .value{color:var(--clay);}
+  .stat.net{grid-column:1 / -1;}
+  .stat.net .value{font-size:24px;}
+
+  .section-title{
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin:22px 0 10px;
+  }
+  .section-title:first-child{margin-top:0;}
+
+  .goal-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:14px;
+    margin-bottom:10px;
+  }
+  .goal-card .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:8px;
+  }
+  .goal-card .row h3{
+    font-size:14px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
+  .goal-card .dev{
+    font-size:13px;
+    font-weight:600;
+    font-family:'Fraunces', serif;
+  }
+  .goal-card .dev.over{color:var(--moss);}
+  .goal-card .dev.under{color:var(--clay);}
+  .goal-bar-track{
+    height:6px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+    margin-bottom:6px;
+  }
+  .goal-bar-fill{
+    height:100%;
+    background:var(--moss);
+    border-radius:3px;
+    transition:width .4s ease;
+  }
+  .goal-meta{
+    font-size:12px;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+  }
+  .goal-edit{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .goal-edit input{
+    flex:1;
+    font-size:13px;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    font-family:'Inter',sans-serif;
+  }
+  .goal-edit button{
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:4px;
+    padding:8px 12px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+
+  .debt-card{
+    background:var(--navy);
+    color:var(--paper);
+    border-radius:6px;
+    padding:14px 16px 13px;
+    margin-bottom:12px;
+  }
+  .debt-card.weekly{
+    border:1px solid var(--brass);
+  }
+  .debt-card .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:10px;
+    gap:8px;
+  }
+  .debt-card .row h3{
+    font-size:14px;
+    font-weight:500;
+    font-family:'Inter',sans-serif;
+    color:var(--brass-soft);
+  }
+  .debt-card .badge{
+    font-size:10px;
+    background:var(--brass);
+    color:var(--navy);
+    padding:2px 6px;
+    border-radius:10px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .debt-card .amount{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:600;
+  }
+  .debt-bar-track{
+    height:7px;
+    background:rgba(255,255,255,0.15);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:8px;
+  }
+  .debt-bar-fill{
+    height:100%;
+    background:var(--brass);
+    border-radius:4px;
+    transition:width .4s ease;
+  }
+  .debt-meta{
+    font-size:12px;
+    color:rgba(255,255,255,0.6);
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:2px;
+  }
+  .debt-actions{
+    display:flex;
+    gap:6px;
+    margin-top:10px;
+  }
+  .debt-actions button{
+    background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.2);
+    color:var(--paper);
+    border-radius:4px;
+    padding:6px 9px;
+    font-size:12px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .debt-actions button.del{color:var(--clay-soft);}
+
+  .add-debt-card{
+    background:var(--paper-raised);
+    border:1px dashed var(--line);
+    border-radius:6px;
+    padding:14px;
+    margin-bottom:14px;
+  }
+  .add-debt-card .form-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .add-debt-card input{
+    font-size:13px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    font-family:'Inter',sans-serif;
+    background:#fff;
+  }
+  .add-debt-card .name-input{flex:1.4;}
+  .add-debt-card .amt-input{flex:1;}
+  .checkbox-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+  .add-debt-card .add-btn{
+    width:100%;
+    padding:9px;
+    border:none;
+    border-radius:4px;
+    background:var(--brass);
+    color:var(--navy);
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+
+  .tabs{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    margin-bottom:16px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:10px 2px;
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--ink-soft);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    background:none;
+    border-top:none;
+    border-left:none;
+    border-right:none;
+    font-family:'Inter',sans-serif;
+  }
+  .tab.active{
+    color:var(--ink);
+    border-bottom-color:var(--brass);
+  }
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .form-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:14px;
+    margin-bottom:18px;
+  }
+  .form-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .form-row:last-child{margin-bottom:0;}
+  .form-card input, .form-card select{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+    width:100%;
+  }
+  .form-card input[type="number"]{flex:1;}
+  .form-card select{flex:1.4;}
+  .form-card .note-row input{width:100%;}
+  .add-btn{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:4px;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:2px;
+  }
+  .add-btn.income-btn{background:var(--moss);}
+  .add-btn.expense-btn{background:var(--clay);}
+
+  .cap-note{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:8px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .cap-note.over{color:var(--clay);font-weight:600;}
+
+  .entry-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  .entry{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 2px;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .entry .left{flex:1;min-width:0;}
+  .entry .cat{
+    font-weight:500;
+  }
+  .entry .note{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:1px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .entry .right{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .entry .amt{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+  }
+  .entry.income .amt{color:var(--moss);}
+  .entry.expense .amt{color:var(--clay);}
+  .entry .del{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:16px;
+    cursor:pointer;
+    padding:2px 4px;
+    line-height:1;
+  }
+  .empty{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:30px 10px;
+  }
+
+  .cat-breakdown{
+    margin-top:18px;
+  }
+  .cat-breakdown h3{
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:none;
+    margin-bottom:10px;
+  }
+  .cat-bar-row{
+    margin-bottom:8px;
+  }
+  .cat-bar-label{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    margin-bottom:3px;
+  }
+  .cat-bar-track{
+    height:5px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .cat-bar-fill{
+    height:100%;
+    background:var(--clay);
+    border-radius:3px;
+  }
+  .cat-bar-fill.inc{background:var(--moss);}
+
+  .loading{
+    text-align:center;
+    padding:60px 10px;
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+
+  .backup-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:14px;
+    margin-top:22px;
+  }
+  .backup-card p{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:0 0 12px;
+    line-height:1.5;
+  }
+  .backup-row{
+    display:flex;
+    gap:8px;
+  }
+  .backup-row button, .backup-row label{
+    flex:1;
+    text-align:center;
+    padding:10px;
+    border-radius:4px;
+    font-size:13px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    display:block;
+  }
+  .backup-row input[type="file"]{display:none;}
+  .backup-status{
+    font-size:12px;
+    margin-top:8px;
+    text-align:center;
+    color:var(--moss);
+    min-height:16px;
+  }
+  .backup-status.error{color:var(--clay);}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading" id="loading">Открываем гроссбух…</div>
+</div>
+
+<script>
+const INCOME_CATS = ["Зарплата","Ночная подработка","Чаевые","Продажа вещей","Подарки","Другое"];
+const EXPENSE_CATS = ["Обязательные","Долг","Жизнь","Спонтанные"];
+
+let state = {
+  entries: [],
+  debts: [],          // {id, name, goal, paid, weekly}
+  goals: { weekAmount: 0, monthAmount: 0 },
+  spontaneousCap: 0
+};
+
+const monthNames = ["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+
+function fmt(n){
+  return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+}
+
+function isThisMonth(dateStr){
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+}
+
+function getWeekRange(){
+  const now = new Date();
+  const day = now.getDay() === 0 ? 7 : now.getDay(); // Monday=1..Sunday=7
+  const monday = new Date(now);
+  monday.setHours(0,0,0,0);
+  monday.setDate(now.getDate() - (day - 1));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23,59,59,999);
+  return {monday, sunday};
+}
+
+function isThisWeek(dateStr){
+  const d = new Date(dateStr);
+  const {monday, sunday} = getWeekRange();
+  return d >= monday && d <= sunday;
+}
+
+const hasCloudStorage = typeof window.storage !== 'undefined' && window.storage !== null;
+const LOCAL_KEY = 'money-ledger-state-v1';
+
+async function loadState(){
+  try{
+    let raw = null;
+    if(hasCloudStorage){
+      const res = await window.storage.get('ledger-state', false);
+      if(res && res.value) raw = res.value;
+    } else {
+      raw = localStorage.getItem(LOCAL_KEY);
+    }
+    if(raw){
+      const parsed = JSON.parse(raw);
+      state = Object.assign(state, parsed);
+      if(!state.debts) state.debts = [];
+      if(!state.goals) state.goals = { weekAmount: 0, monthAmount: 0 };
+    }
+  }catch(e){
+    console.log('No existing state, starting fresh', e);
+  }
+  render();
+}
+
+async function saveState(){
+  try{
+    const payload = JSON.stringify(state);
+    if(hasCloudStorage){
+      await window.storage.set('ledger-state', payload, false);
+    } else {
+      localStorage.setItem(LOCAL_KEY, payload);
+    }
+  }catch(e){
+    console.error('Save failed', e);
+  }
+}
+
+function addEntry(type){
+  const amountEl = document.getElementById(type+'-amount');
+  const catEl = document.getElementById(type+'-cat');
+  const noteEl = document.getElementById(type+'-note');
+  const amount = parseFloat(amountEl.value);
+  if(!amount || amount <= 0){
+    amountEl.focus();
+    return;
+  }
+  let debtId = null;
+  if(type === 'expense' && catEl.value === 'Долг'){
+    const debtSel = document.getElementById('expense-debt-select');
+    if(debtSel && debtSel.value) debtId = debtSel.value;
+  }
+  state.entries.unshift({
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    type,
+    amount,
+    category: catEl.value,
+    note: noteEl.value.trim(),
+    date: new Date().toISOString(),
+    debtId
+  });
+  if(debtId){
+    const debt = state.debts.find(d => d.id === debtId);
+    if(debt) debt.paid = (debt.paid||0) + amount;
+  }
+  amountEl.value = '';
+  noteEl.value = '';
+  saveState();
+  render();
+}
+
+function deleteEntry(id){
+  const entry = state.entries.find(e => e.id === id);
+  if(entry && entry.debtId){
+    const debt = state.debts.find(d => d.id === entry.debtId);
+    if(debt) debt.paid = Math.max(0, (debt.paid||0) - entry.amount);
+  }
+  state.entries = state.entries.filter(e => e.id !== id);
+  saveState();
+  render();
+}
+
+function onExpenseCatChange(){
+  render();
+  // re-focus amount after re-render
+  const el = document.getElementById('expense-amount');
+  if(el) el.focus();
+}
+
+function addDebt(){
+  const nameEl = document.getElementById('new-debt-name');
+  const amtEl = document.getElementById('new-debt-amount');
+  const weeklyEl = document.getElementById('new-debt-weekly');
+  const name = nameEl.value.trim();
+  const amount = parseFloat(amtEl.value);
+  if(!name || !amount || amount <= 0){
+    if(!name) nameEl.focus(); else amtEl.focus();
+    return;
+  }
+  state.debts.push({
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    name,
+    goal: amount,
+    paid: 0,
+    weekly: weeklyEl.checked
+  });
+  nameEl.value = '';
+  amtEl.value = '';
+  weeklyEl.checked = false;
+  saveState();
+  render();
+}
+
+function deleteDebt(id){
+  state.debts = state.debts.filter(d => d.id !== id);
+  // detach entries pointing to this debt (keep entries, just unlink)
+  state.entries.forEach(e => { if(e.debtId === id) e.debtId = null; });
+  saveState();
+  render();
+}
+
+function markDebtDone(id){
+  const debt = state.debts.find(d => d.id === id);
+  if(debt) debt.paid = debt.goal;
+  saveState();
+  render();
+}
+
+function setWeekGoal(){
+  const val = parseFloat(document.getElementById('week-goal-input').value);
+  if(val >= 0){
+    state.goals.weekAmount = val;
+    saveState();
+    render();
+  }
+}
+
+function setMonthGoal(){
+  const val = parseFloat(document.getElementById('month-goal-input').value);
+  if(val >= 0){
+    state.goals.monthAmount = val;
+    saveState();
+    render();
+  }
+}
+
+function setCap(){
+  const val = parseFloat(document.getElementById('cap-input').value);
+  if(val >= 0){
+    state.spontaneousCap = val;
+    saveState();
+    render();
+  }
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+name));
+}
+
+function monthEntries(){
+  return state.entries.filter(e => isThisMonth(e.date));
+}
+function weekEntries(){
+  return state.entries.filter(e => isThisWeek(e.date));
+}
+
+function render(){
+  const app = document.getElementById('app');
+  const entries = monthEntries();
+  const income = entries.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+  const expense = entries.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+  const net = income - expense;
+  const spontaneous = entries.filter(e=>e.type==='expense' && e.category==='Спонтанные').reduce((s,e)=>s+e.amount,0);
+
+  const wEntries = weekEntries();
+  const weekIncome = wEntries.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+
+  const now = new Date();
+  const monthLabel = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+  const {monday, sunday} = getWeekRange();
+  const weekLabel = monday.getDate() + '–' + sunday.getDate() + ' ' + monthNames[sunday.getMonth()];
+
+  const incomeCatTotals = {};
+  INCOME_CATS.forEach(c => incomeCatTotals[c] = 0);
+  entries.filter(e=>e.type==='income').forEach(e => incomeCatTotals[e.category] = (incomeCatTotals[e.category]||0) + e.amount);
+
+  const expenseCatTotals = {};
+  EXPENSE_CATS.forEach(c => expenseCatTotals[c] = 0);
+  entries.filter(e=>e.type==='expense').forEach(e => expenseCatTotals[e.category] = (expenseCatTotals[e.category]||0) + e.amount);
+
+  const expenseCatSelected = document.getElementById('expense-cat') ? document.getElementById('expense-cat').value : EXPENSE_CATS[0];
+
+  app.innerHTML = `
+    <header class="top">
+      <h1>Бабки-менеджмент</h1>
+      <div class="date">${monthLabel}</div>
+    </header>
+
+    <div class="summary">
+      <div class="stat income">
+        <div class="label">Доход за месяц</div>
+        <div class="value">${fmt(income)}</div>
+      </div>
+      <div class="stat expense">
+        <div class="label">Расход за месяц</div>
+        <div class="value">${fmt(expense)}</div>
+      </div>
+      <div class="stat net">
+        <div class="label">Осталось на руках</div>
+        <div class="value" style="color:${net>=0?'var(--moss)':'var(--clay)'}">${fmt(net)}</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="income" onclick="switchTab('income')">Доходы</button>
+      <button class="tab" data-tab="expense" onclick="switchTab('expense')">Расходы</button>
+      <button class="tab" data-tab="goals" onclick="switchTab('goals')">Цели и долги</button>
+      <button class="tab" data-tab="overview" onclick="switchTab('overview')">Обзор</button>
+    </div>
+
+    <div class="panel active" id="panel-income">
+      <div class="form-card">
+        <div class="form-row">
+          <input type="number" id="income-amount" placeholder="Сумма, ₽" inputmode="decimal">
+          <select id="income-cat">${INCOME_CATS.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+        </div>
+        <div class="form-row note-row">
+          <input type="text" id="income-note" placeholder="Заметка (необязательно)">
+        </div>
+        <button class="add-btn income-btn" onclick="addEntry('income')">Записать доход</button>
+      </div>
+      ${renderEntryList(entries.filter(e=>e.type==='income'))}
+    </div>
+
+    <div class="panel" id="panel-expense">
+      <div class="form-card">
+        <div class="form-row">
+          <input type="number" id="expense-amount" placeholder="Сумма, ₽" inputmode="decimal">
+          <select id="expense-cat" onchange="onExpenseCatChange()">${EXPENSE_CATS.map(c=>`<option value="${c}" ${c===expenseCatSelected?'selected':''}>${c}</option>`).join('')}</select>
+        </div>
+        ${expenseCatSelected === 'Долг' ? `
+        <div class="form-row">
+          <select id="expense-debt-select" style="width:100%;">
+            ${state.debts.length === 0 ? `<option value="">Сначала добавь долг во вкладке «Цели и долги»</option>` :
+              state.debts.map(d => `<option value="${d.id}">${d.name} (осталось ${fmt(Math.max(0,d.goal-d.paid))})</option>`).join('')}
+          </select>
+        </div>` : ''}
+        <div class="form-row note-row">
+          <input type="text" id="expense-note" placeholder="Заметка (необязательно)">
+        </div>
+        <button class="add-btn expense-btn" onclick="addEntry('expense')">Записать расход</button>
+        <div class="goal-edit">
+          <input type="number" id="cap-input" placeholder="Лимит на спонтанные, ₽" value="${state.spontaneousCap||''}">
+          <button onclick="setCap()">Задать</button>
+        </div>
+        ${state.spontaneousCap ? `<div class="cap-note ${spontaneous > state.spontaneousCap ? 'over':''}">
+          <span>Спонтанные в этом месяце</span>
+          <span>${fmt(spontaneous)} / ${fmt(state.spontaneousCap)}</span>
+        </div>` : ''}
+      </div>
+      ${renderEntryList(entries.filter(e=>e.type==='expense'))}
+    </div>
+
+    <div class="panel" id="panel-goals">
+      <div class="section-title">Цель по доходу — неделя (${weekLabel})</div>
+      ${renderIncomeGoal(weekIncome, state.goals.weekAmount, 'week-goal-input', 'setWeekGoal')}
+
+      <div class="section-title">Цель по доходу — месяц</div>
+      ${renderIncomeGoal(income, state.goals.monthAmount, 'month-goal-input', 'setMonthGoal')}
+
+      <div class="section-title">Долги</div>
+      ${state.debts.length === 0 ? '' : state.debts.map(renderDebtCard).join('')}
+      <div class="add-debt-card">
+        <div class="form-row">
+          <input class="name-input" type="text" id="new-debt-name" placeholder="Название (напр. Т-Банк кубышка)">
+          <input class="amt-input" type="number" id="new-debt-amount" placeholder="Сумма, ₽">
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="new-debt-weekly">
+          Хочу закрыть на этой неделе
+        </label>
+        <button class="add-btn" onclick="addDebt()">Добавить долг</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-overview">
+      <div class="cat-breakdown">
+        <h3>Откуда доход</h3>
+        ${renderBars(incomeCatTotals, income, 'inc')}
+      </div>
+      <div class="cat-breakdown">
+        <h3>Куда уходит</h3>
+        ${renderBars(expenseCatTotals, expense, '')}
+      </div>
+
+      <div class="backup-card">
+        <p>Вся база (доходы, расходы, долги, цели) — в один файл. Сохрани его куда угодно: в облако, на флешку, отправь себе. Если что-то случится с кэшем браузера, загрузишь этот файл обратно и всё восстановится.</p>
+        <div class="backup-row">
+          <button onclick="exportData()">Скачать бэкап</button>
+          <label for="import-file">Загрузить бэкап</label>
+          <input type="file" id="import-file" accept="application/json" onchange="importData(event)">
+        </div>
+        <div class="backup-status" id="backup-status"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderIncomeGoal(actual, target, inputId, fnName){
+  const pct = target > 0 ? Math.min(100, Math.round((actual/target)*100)) : 0;
+  const diff = actual - target;
+  const devClass = diff >= 0 ? 'over' : 'under';
+  const devText = target > 0
+    ? (diff >= 0 ? `+${fmt(diff)} к цели` : `${fmt(diff)} до цели`)
+    : '';
+  return `
+    <div class="goal-card">
+      <div class="row">
+        <h3>${fmt(actual)}${target > 0 ? ' / ' + fmt(target) : ''}</h3>
+        ${target > 0 ? `<span class="dev ${devClass}">${devText}</span>` : ''}
+      </div>
+      ${target > 0 ? `<div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
+      <div class="goal-meta"><span>Выполнено</span><span>${pct}%</span></div>` : ''}
+      <div class="goal-edit">
+        <input type="number" id="${inputId}" placeholder="Цель, ₽" value="${target||''}">
+        <button onclick="${fnName}()">Задать</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderDebtCard(debt){
+  const remaining = Math.max(0, debt.goal - debt.paid);
+  const pct = debt.goal > 0 ? Math.min(100, Math.round((debt.paid/debt.goal)*100)) : 0;
+  return `
+    <div class="debt-card ${debt.weekly ? 'weekly' : ''}">
+      <div class="row">
+        <h3>${debt.name}</h3>
+        ${debt.weekly ? '<span class="badge">На этой неделе</span>' : ''}
+      </div>
+      <div class="amount">${fmt(remaining)}</div>
+      <div class="debt-bar-track"><div class="debt-bar-fill" style="width:${pct}%"></div></div>
+      <div class="debt-meta">
+        <span>Погашено: ${fmt(debt.paid)} из ${fmt(debt.goal)}</span>
+        <span>${pct}%</span>
+      </div>
+      <div class="debt-actions">
+        ${remaining > 0 ? `<button onclick="markDebtDone('${debt.id}')">Отметить закрытым</button>` : ''}
+        <button class="del" onclick="deleteDebt('${debt.id}')">Удалить</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderBars(totals, sum, cls){
+  const entries = Object.entries(totals).filter(([,v]) => v > 0);
+  if(entries.length === 0) return `<div class="empty">Пока пусто</div>`;
+  return entries.sort((a,b)=>b[1]-a[1]).map(([cat,val]) => {
+    const pct = sum > 0 ? Math.round((val/sum)*100) : 0;
+    return `<div class="cat-bar-row">
+      <div class="cat-bar-label"><span>${cat}</span><span>${fmt(val)} · ${pct}%</span></div>
+      <div class="cat-bar-track"><div class="cat-bar-fill ${cls}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderEntryList(list){
+  if(list.length === 0) return `<div class="empty">Записей за этот месяц пока нет</div>`;
+  return `<ul class="entry-list">${list.map(e => {
+    const d = new Date(e.date);
+    const dateStr = d.getDate() + ' ' + monthNames[d.getMonth()].slice(0,3);
+    const debtName = e.debtId ? (state.debts.find(x=>x.id===e.debtId)||{}).name : null;
+    return `<li class="entry ${e.type}">
+      <div class="left">
+        <div class="cat">${e.category}${debtName ? ' · ' + debtName : ''}</div>
+        <div class="note">${e.note ? e.note + ' · ' : ''}${dateStr}</div>
+      </div>
+      <div class="right">
+        <span class="amt">${e.type==='income'?'+':'−'}${fmt(e.amount)}</span>
+        <button class="del" onclick="deleteEntry('${e.id}')">✕</button>
+      </div>
+    </li>`;
+  }).join('')}</ul>`;
+}
+
+function exportData(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `бабки-менеджмент-бэкап-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const statusEl = document.getElementById('backup-status');
+  if(statusEl){
+    statusEl.textContent = 'Файл скачан';
+    statusEl.classList.remove('error');
+  }
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  const statusEl = document.getElementById('backup-status');
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const parsed = JSON.parse(e.target.result);
+      const incoming = parsed.state || parsed; // support raw state or wrapped export
+      if(!incoming || !Array.isArray(incoming.entries)){
+        throw new Error('Неверный формат файла');
+      }
+      state = Object.assign({entries:[], debts:[], goals:{weekAmount:0, monthAmount:0}, spontaneousCap:0}, incoming);
+      saveState();
+      render();
+      const s = document.getElementById('backup-status');
+      if(s){
+        s.textContent = 'База восстановлена из файла';
+        s.classList.remove('error');
+      }
+    }catch(err){
+      if(statusEl){
+        statusEl.textContent = 'Не удалось прочитать файл — проверь, что это тот самый бэкап';
+        statusEl.classList.add('error');
+      }
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+loadState();
+</script>
+</body>
+</html>
