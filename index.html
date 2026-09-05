@@ -20,7 +20,25 @@
     --clay: #A9573F;
     --clay-soft: #EEDAD1;
     --line: #D8D0BE;
+    --debt-card-bg: #2C3A4F;
+    --debt-card-fg: #EDE7DA;
   }
+
+  html[data-theme="dark"]{
+    --paper: #1C1914;
+    --paper-raised: #262119;
+    --ink: #EDE7DA;
+    --ink-soft: #A79E8C;
+    --navy: #8FA6C4;
+    --brass: #D3A96A;
+    --brass-soft: #423521;
+    --moss: #8FB088;
+    --moss-soft: #2A331F;
+    --clay: #DA8C6C;
+    --clay-soft: #3B241C;
+    --line: #38321F;
+  }
+  html[data-theme="dark"] body{background:var(--paper);}
 
   *{box-sizing:border-box;}
   body{
@@ -46,6 +64,9 @@
     padding-bottom:16px;
     border-bottom:1px solid var(--line);
     margin-bottom:18px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
   }
   header.top h1{
     font-size:26px;
@@ -56,6 +77,16 @@
     font-size:13px;
     color:var(--ink-soft);
     margin-top:4px;
+  }
+  .theme-toggle{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:50%;
+    width:38px;
+    height:38px;
+    font-size:16px;
+    cursor:pointer;
+    flex-shrink:0;
   }
 
   .summary{
@@ -162,8 +193,8 @@
   }
 
   .debt-card{
-    background:var(--navy);
-    color:var(--paper);
+    background:var(--debt-card-bg);
+    color:var(--debt-card-fg);
     border-radius:6px;
     padding:14px 16px 13px;
     margin-bottom:12px;
@@ -253,7 +284,7 @@
     border:1px solid var(--line);
     border-radius:4px;
     font-family:'Inter',sans-serif;
-    background:#fff;
+    background:var(--paper-raised);
   }
   .add-debt-card .name-input{flex:1.4;}
   .add-debt-card .amt-input{flex:1;}
@@ -325,7 +356,7 @@
     padding:9px 10px;
     border:1px solid var(--line);
     border-radius:4px;
-    background:#fff;
+    background:var(--paper-raised);
     color:var(--ink);
     width:100%;
   }
@@ -476,7 +507,7 @@
     font-family:'Inter',sans-serif;
     cursor:pointer;
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--paper-raised);
     color:var(--ink);
     display:block;
   }
@@ -497,7 +528,7 @@
   }
 
   .search-row input{
-    background:#fff;
+    background:var(--paper-raised);
   }
 
   .templates-card{
@@ -541,7 +572,7 @@
     padding:8px;
     border-radius:4px;
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--paper-raised);
     font-size:13px;
     font-weight:500;
     font-family:'Inter',sans-serif;
@@ -644,6 +675,78 @@
     padding:10px 2px 14px;
   }
   .entry.edit-row .form-row{margin-bottom:6px;}
+
+  .pending-card{
+    background:var(--paper-raised);
+    border:1px solid var(--brass-soft);
+    border-radius:6px;
+    padding:12px 14px;
+    margin-bottom:14px;
+  }
+  .pending-total{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:15px;
+    margin-bottom:8px;
+    color:var(--brass);
+  }
+  .pending-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .pending-row:last-of-type{border-bottom:none;}
+  .pending-amt{font-weight:500;font-size:13.5px;}
+  .pending-note{font-size:11.5px;color:var(--ink-soft);}
+  .clear-pending-btn{
+    width:100%;
+    margin-top:8px;
+    background:none;
+    border:1px dashed var(--brass);
+    color:var(--brass);
+    border-radius:4px;
+    padding:8px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .pending-card input{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--paper-raised);
+    color:var(--ink);
+    width:100%;
+  }
+  .pending-card .form-row input{flex:1;}
+  .rate-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .rate-row label{
+    flex:1;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .rate-row input{margin-top:2px;}
+  .pending-preview{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    text-align:right;
+    min-height:16px;
+    margin-bottom:4px;
+  }
 </style>
 </head>
 <body>
@@ -660,15 +763,88 @@ let state = {
   debts: [],           // {id, name, goal, paid, weekly, weeklyGoal}
   goals: { weekAmount: 0, monthAmount: 0 },
   categoryCaps: {},    // { "Спонтанные": 5000, ... }
-  templates: []        // {id, name, amount, category}
+  templates: [],       // {id, name, amount, category}
+  pending: [],         // {id, hours, orders, amount, note, date} — ожидаемые, но ещё не пришедшие начисления
+  payRates: { hourly: 176, perOrder: 96 }
 };
 
 let activeTab = 'income';
 let editingEntryId = null;
-let overviewPeriod = 'month'; // 'month' | 'week'
-let overviewOffset = 0;       // 0 = текущий период, -1 = предыдущий, ...
+let overviewPeriod = 'month';
+let overviewOffset = 0;
 let incomeSearch = '';
 let expenseSearch = '';
+let currentTheme = 'light';
+
+function loadTheme(){
+  try{
+    const saved = localStorage.getItem('money-ledger-theme');
+    if(saved === 'dark') currentTheme = 'dark';
+  }catch(e){}
+  document.documentElement.setAttribute('data-theme', currentTheme);
+}
+
+function addPending(){
+  const hoursEl = document.getElementById('pending-hours');
+  const ordersEl = document.getElementById('pending-orders');
+  const noteEl = document.getElementById('pending-note');
+  const hours = parseFloat(hoursEl.value) || 0;
+  const orders = parseFloat(ordersEl.value) || 0;
+  if(hours <= 0 && orders <= 0){
+    hoursEl.focus();
+    return;
+  }
+  const amount = hours*state.payRates.hourly + orders*state.payRates.perOrder;
+  state.pending.push({
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    hours,
+    orders,
+    amount,
+    note: noteEl.value.trim(),
+    date: new Date().toISOString()
+  });
+  hoursEl.value = '';
+  ordersEl.value = '';
+  noteEl.value = '';
+  saveState();
+  render();
+}
+
+function updatePendingPreview(){
+  const h = parseFloat(document.getElementById('pending-hours').value) || 0;
+  const o = parseFloat(document.getElementById('pending-orders').value) || 0;
+  const amount = h*state.payRates.hourly + o*state.payRates.perOrder;
+  const el = document.getElementById('pending-preview');
+  if(el) el.textContent = amount > 0 ? ('= ' + fmt(amount)) : '';
+}
+
+function updatePayRates(){
+  const hourlyEl = document.getElementById('rate-hourly');
+  const orderEl = document.getElementById('rate-order');
+  state.payRates.hourly = parseFloat(hourlyEl.value) || 0;
+  state.payRates.perOrder = parseFloat(orderEl.value) || 0;
+  saveState();
+  render();
+}
+
+function deletePending(id){
+  state.pending = state.pending.filter(p => p.id !== id);
+  saveState();
+  render();
+}
+
+function clearAllPending(){
+  state.pending = [];
+  saveState();
+  render();
+}
+
+function toggleTheme(){
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  try{ localStorage.setItem('money-ledger-theme', currentTheme); }catch(e){}
+  render();
+}
 
 const monthNames = ["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
 
@@ -766,6 +942,8 @@ async function loadState(){
       if(!state.goals) state.goals = { weekAmount: 0, monthAmount: 0 };
       if(!state.categoryCaps) state.categoryCaps = {};
       if(!state.templates) state.templates = [];
+      if(!state.pending) state.pending = [];
+      if(!state.payRates) state.payRates = { hourly: 176, perOrder: 96 };
       if(parsed.spontaneousCap && !state.categoryCaps['Спонтанные']){
         state.categoryCaps['Спонтанные'] = parsed.spontaneousCap;
       }
@@ -1081,6 +1259,10 @@ function render(){
   const expenseNoteVal = fv('expense-note');
   const expenseDateVal = fv('expense-date') || todayISODate();
   const expenseMethodVal = document.getElementById('expense-method') ? document.getElementById('expense-method').value : 'card';
+  const pendingHoursVal = fv('pending-hours');
+  const pendingOrdersVal = fv('pending-orders');
+  const pendingNoteVal = fv('pending-note');
+  const pendingTotal = state.pending.reduce((s,p)=>s+p.amount,0);
 
   const cashBal = cashBalance();
 
@@ -1097,14 +1279,18 @@ function render(){
 
   app.innerHTML = `
     <header class="top">
-      <h1>Бабки-менеджмент</h1>
-      <div class="date">${monthLabel}</div>
+      <div>
+        <h1>Бабки-менеджмент</h1>
+        <div class="date">${monthLabel}</div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Тема">${currentTheme==='dark' ? '☀️' : '🌙'}</button>
     </header>
 
     <div class="summary">
       <div class="stat income">
         <div class="label">Доход за месяц</div>
         <div class="value">${fmt(income)}</div>
+        ${pendingTotal > 0 ? `<div class="cash-note">+ ожидается: ${fmt(pendingTotal)}</div>` : ''}
       </div>
       <div class="stat expense">
         <div class="label">Расход за месяц</div>
@@ -1142,6 +1328,43 @@ function render(){
         </div>
         <button class="add-btn income-btn" onclick="addEntry('income')">Записать доход</button>
       </div>
+
+      <div class="section-title">Ожидается к начислению</div>
+      <div class="pending-card">
+        <div class="pending-total">Всего в ожидании: ${fmt(pendingTotal)}</div>
+
+        <div class="rate-row">
+          <label>₽/час<input type="number" id="rate-hourly" value="${state.payRates.hourly}" onchange="updatePayRates()"></label>
+          <label>₽/заказ<input type="number" id="rate-order" value="${state.payRates.perOrder}" onchange="updatePayRates()"></label>
+        </div>
+
+        ${state.pending.length === 0 ? `<div class="empty">Пока нечего ждать</div>` :
+          state.pending.map(p => {
+            const pd = new Date(p.date);
+            const parts = [];
+            if(p.hours !== undefined) parts.push(`${p.hours}ч · ${p.orders} зак.`);
+            if(p.note) parts.push(p.note);
+            parts.push(pd.getDate() + ' ' + monthNames[pd.getMonth()].slice(0,3));
+            return `<div class="pending-row">
+              <div class="pending-info">
+                <div class="pending-amt">${fmt(p.amount)}</div>
+                <div class="pending-note">${parts.join(' · ')}</div>
+              </div>
+              <button class="del" onclick="deletePending('${p.id}')">✕</button>
+            </div>`;
+          }).join('')}
+        <div class="form-row" style="margin-top:10px;">
+          <input type="number" id="pending-hours" placeholder="Часы" value="${pendingHoursVal}" oninput="updatePendingPreview()">
+          <input type="number" id="pending-orders" placeholder="Заказов" value="${pendingOrdersVal}" oninput="updatePendingPreview()">
+        </div>
+        <div class="form-row">
+          <input type="text" id="pending-note" placeholder="Заметка (необязательно)" value="${pendingNoteVal}">
+        </div>
+        <div class="pending-preview" id="pending-preview"></div>
+        <button class="add-btn" style="background:var(--brass);" onclick="addPending()">Добавить в ожидание</button>
+        ${state.pending.length > 0 ? `<button class="clear-pending-btn" onclick="clearAllPending()">Зарплата пришла — очистить список</button>` : ''}
+      </div>
+
       <div class="form-row search-row">
         <input type="text" id="income-search" placeholder="Поиск по заметке…" value="${incomeSearch}" oninput="onIncomeSearch()">
       </div>
@@ -1470,9 +1693,11 @@ function importData(event){
       if(!incoming || !Array.isArray(incoming.entries)){
         throw new Error('Неверный формат файла');
       }
-      state = Object.assign({entries:[], debts:[], goals:{weekAmount:0, monthAmount:0}, categoryCaps:{}, templates:[]}, incoming);
+      state = Object.assign({entries:[], debts:[], goals:{weekAmount:0, monthAmount:0}, categoryCaps:{}, templates:[], pending:[], payRates:{hourly:176, perOrder:96}}, incoming);
       if(!state.categoryCaps) state.categoryCaps = {};
       if(!state.templates) state.templates = [];
+      if(!state.pending) state.pending = [];
+      if(!state.payRates) state.payRates = { hourly: 176, perOrder: 96 };
       if(incoming.spontaneousCap && !state.categoryCaps['Спонтанные']){
         state.categoryCaps['Спонтанные'] = incoming.spontaneousCap;
       }
@@ -1496,6 +1721,7 @@ function importData(event){
   reader.readAsText(file);
 }
 
+loadTheme();
 loadState();
 </script>
 </body>
