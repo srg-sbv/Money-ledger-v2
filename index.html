@@ -361,6 +361,7 @@
     width:100%;
   }
   .form-card input[type="number"]{flex:1;}
+  .form-card input[type="date"]{flex:1.6;}
   .form-card select{flex:1.4;}
   .form-card .note-row input{width:100%;}
   .add-btn{
@@ -1241,7 +1242,7 @@ function render(){
   const allEntriesSorted = [...state.entries].sort((a,b) => new Date(b.date) - new Date(a.date));
   const income = entries.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
   const expense = entries.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
-  const net = income - expense;
+  const net = state.entries.reduce((s,e) => s + (e.type==='income' ? e.amount : -e.amount), 0);
   const spontaneous = entries.filter(e=>e.type==='expense' && e.category==='Спонтанные').reduce((s,e)=>s+e.amount,0);
 
   const wEntries = weekEntries();
@@ -1308,7 +1309,7 @@ function render(){
         <div class="value">${fmt(expense)}</div>
       </div>
       <div class="stat net">
-        <div class="label">Осталось на руках</div>
+        <div class="label">Осталось на руках (всего)</div>
         <div class="value" style="color:${net>=0?'var(--moss)':'var(--clay)'}">${fmt(net)}</div>
         <div class="cash-note">Наличными на руках (всего): ${fmt(cashBal)}</div>
       </div>
@@ -1329,7 +1330,7 @@ function render(){
         </div>
         <div class="form-row">
           <input type="date" id="income-date" value="${incomeDateVal}">
-          <select id="income-method" style="flex:0.7;">
+          <select id="income-method">
             <option value="card" ${incomeMethodVal==='card'?'selected':''}>Карта</option>
             <option value="cash" ${incomeMethodVal==='cash'?'selected':''}>Нал</option>
           </select>
@@ -1390,7 +1391,7 @@ function render(){
         </div>
         <div class="form-row">
           <input type="date" id="expense-date" value="${expenseDateVal}">
-          <select id="expense-method" style="flex:0.7;">
+          <select id="expense-method">
             <option value="card" ${expenseMethodVal==='card'?'selected':''}>Карта</option>
             <option value="cash" ${expenseMethodVal==='cash'?'selected':''}>Нал</option>
           </select>
