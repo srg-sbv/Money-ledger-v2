@@ -847,6 +847,7 @@ function toggleTheme(){
 }
 
 const monthNames = ["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+const weekdayNamesShort = ["вс","пн","вт","ср","чт","пт","сб"];
 
 function fmt(n){
   return Math.round(n).toLocaleString('ru-RU') + ' ₽';
@@ -882,6 +883,15 @@ function isThisWeek(dateStr){
 }
 
 function getPeriodRange(period, offset){
+  if(period === 'day'){
+    const start = new Date();
+    start.setDate(start.getDate() + offset);
+    start.setHours(0,0,0,0);
+    const end = new Date(start);
+    end.setHours(23,59,59,999);
+    const label = weekdayNamesShort[start.getDay()] + ', ' + start.getDate() + ' ' + monthNames[start.getMonth()];
+    return {start, end, label};
+  }
   if(period === 'week'){
     const {monday} = getWeekRange();
     const start = new Date(monday);
@@ -1228,6 +1238,7 @@ function render(){
   const focusedId = activeEl && activeEl.id ? activeEl.id : null;
   const focusedSel = (focusedId && typeof activeEl.selectionStart === 'number') ? activeEl.selectionStart : null;
   const entries = monthEntries();
+  const allEntriesSorted = [...state.entries].sort((a,b) => new Date(b.date) - new Date(a.date));
   const income = entries.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
   const expense = entries.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
   const net = income - expense;
@@ -1368,7 +1379,7 @@ function render(){
       <div class="form-row search-row">
         <input type="text" id="income-search" placeholder="Поиск по заметке…" value="${incomeSearch}" oninput="onIncomeSearch()">
       </div>
-      ${renderEntryList(entries.filter(e=>e.type==='income'), incomeSearch, 'income')}
+      ${renderEntryList(allEntriesSorted.filter(e=>e.type==='income'), incomeSearch, 'income')}
     </div>
 
     <div class="panel${activeTab==='expense'?' active':''}" id="panel-expense">
@@ -1422,7 +1433,7 @@ function render(){
       <div class="form-row search-row" style="margin-top:16px;">
         <input type="text" id="expense-search" placeholder="Поиск по заметке…" value="${expenseSearch}" oninput="onExpenseSearch()">
       </div>
-      ${renderEntryList(entries.filter(e=>e.type==='expense'), expenseSearch, 'expense')}
+      ${renderEntryList(allEntriesSorted.filter(e=>e.type==='expense'), expenseSearch, 'expense')}
     </div>
 
     <div class="panel${activeTab==='goals'?' active':''}" id="panel-goals">
@@ -1449,6 +1460,7 @@ function render(){
 
     <div class="panel${activeTab==='overview'?' active':''}" id="panel-overview">
       <div class="period-switch">
+        <button class="period-btn ${overviewPeriod==='day'?'active':''}" onclick="setOverviewPeriod('day')">День</button>
         <button class="period-btn ${overviewPeriod==='week'?'active':''}" onclick="setOverviewPeriod('week')">Неделя</button>
         <button class="period-btn ${overviewPeriod==='month'?'active':''}" onclick="setOverviewPeriod('month')">Месяц</button>
       </div>
@@ -1613,7 +1625,7 @@ function renderPieChart(totals){
 
 function renderEntryList(list, searchQ, kind){
   const filtered = searchQ ? list.filter(e => (e.note||'').toLowerCase().includes(searchQ.toLowerCase()) || e.category.toLowerCase().includes(searchQ.toLowerCase())) : list;
-  if(filtered.length === 0) return `<div class="empty">${searchQ ? 'Ничего не найдено' : 'Записей за этот месяц пока нет'}</div>`;
+  if(filtered.length === 0) return `<div class="empty">${searchQ ? 'Ничего не найдено' : 'Записей пока нет'}</div>`;
   const cats = kind === 'income' ? INCOME_CATS : EXPENSE_CATS;
   return `<ul class="entry-list">${filtered.map(e => {
     if(editingEntryId === e.id){
