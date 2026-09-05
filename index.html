@@ -714,7 +714,8 @@
     cursor:pointer;
     font-family:'Inter',sans-serif;
   }
-  .pending-card input{
+  .transfer-list{margin-top:10px;}
+  .pending-card input, .pending-card select{
     font-family:'Inter',sans-serif;
     font-size:14px;
     padding:9px 10px;
@@ -725,6 +726,8 @@
     width:100%;
   }
   .pending-card .form-row input{flex:1;}
+  .pending-card .form-row input[type="date"]{flex:1.3;}
+  .pending-card .form-row select{flex:1.5;}
   .rate-row{
     display:flex;
     gap:10px;
@@ -783,6 +786,50 @@ function loadTheme(){
     if(saved === 'dark') currentTheme = 'dark';
   }catch(e){}
   document.documentElement.setAttribute('data-theme', currentTheme);
+}
+
+function makeTransfer(){
+  const amountEl = document.getElementById('transfer-amount');
+  const dirEl = document.getElementById('transfer-direction');
+  const dateEl = document.getElementById('transfer-date');
+  const noteEl = document.getElementById('transfer-note');
+  const amount = parseFloat(amountEl.value);
+  if(!amount || amount <= 0){
+    amountEl.focus();
+    return;
+  }
+  const dir = dirEl.value; // 'card-to-cash' or 'cash-to-card'
+  const dateVal = dateEl && dateEl.value ? dateEl.value : todayISODate();
+  const note = noteEl.value.trim();
+  const fromMethod = dir === 'card-to-cash' ? 'card' : 'cash';
+  const toMethod = dir === 'card-to-cash' ? 'cash' : 'card';
+  const baseId = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  state.entries.unshift({
+    id: baseId+'a',
+    type: 'transfer',
+    direction: 'out',
+    amount,
+    category: 'Перевод',
+    note,
+    date: dateVal,
+    method: fromMethod,
+    linkId: baseId+'b'
+  });
+  state.entries.unshift({
+    id: baseId+'b',
+    type: 'transfer',
+    direction: 'in',
+    amount,
+    category: 'Перевод',
+    note,
+    date: dateVal,
+    method: toMethod,
+    linkId: baseId+'a'
+  });
+  amountEl.value = '';
+  noteEl.value = '';
+  saveState();
+  render();
 }
 
 function addPending(){
@@ -914,9 +961,21 @@ function entriesInRange(start, end){
   return state.entries.filter(e => { const d = new Date(e.date); return d >= start && d <= end; });
 }
 
+function entrySign(e){
+  if(e.type === 'income') return 1;
+  if(e.type === 'expense') return -1;
+  if(e.type === 'transfer') return e.direction === 'in' ? 1 : -1;
+  return 0;
+}
+
 function cashBalance(){
   return state.entries.filter(e => e.method === 'cash')
-    .reduce((s,e) => s + (e.type==='income' ? e.amount : -e.amount), 0);
+    .reduce((s,e) => s + entrySign(e)*e.amount, 0);
+}
+
+function cardBalance(){
+  return state.entries.filter(e => e.method === 'card' || !e.method)
+    .reduce((s,e) => s + entrySign(e)*e.amount, 0);
 }
 
 function computeDebtForecast(debt){
@@ -1022,7 +1081,9 @@ function deleteEntry(id){
     const debt = state.debts.find(d => d.id === entry.debtId);
     if(debt) debt.paid = Math.max(0, (debt.paid||0) - entry.amount);
   }
-  state.entries = state.entries.filter(e => e.id !== id);
+  const idsToRemove = [id];
+  if(entry && entry.type === 'transfer' && entry.linkId) idsToRemove.push(entry.linkId);
+  state.entries = state.entries.filter(e => !idsToRemove.includes(e.id));
   saveState();
   render();
 }
@@ -1242,7 +1303,7 @@ function render(){
   const allEntriesSorted = [...state.entries].sort((a,b) => new Date(b.date) - new Date(a.date));
   const income = entries.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
   const expense = entries.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
-  const net = state.entries.reduce((s,e) => s + (e.type==='income' ? e.amount : -e.amount), 0);
+  const net = state.entries.reduce((s,e) => s + entrySign(e)*e.amount, 0);
   const spontaneous = entries.filter(e=>e.type==='expense' && e.category==='Спонтанные').reduce((s,e)=>s+e.amount,0);
 
   const wEntries = weekEntries();
@@ -1276,7 +1337,14 @@ function render(){
   const pendingNoteVal = fv('pending-note');
   const pendingTotal = state.pending.reduce((s,p)=>s+p.amount,0);
 
+  const transferAmountVal = fv('transfer-amount');
+  const transferNoteVal = fv('transfer-note');
+  const transferDateVal = fv('transfer-date') || todayISODate();
+  const transferDirVal = document.getElementById('transfer-direction') ? document.getElementById('transfer-direction').value : 'card-to-cash';
+  const recentTransfers = state.entries.filter(e => e.type==='transfer' && e.direction==='out').sort((a,b)=> new Date(b.date)-new Date(a.date));
+
   const cashBal = cashBalance();
+  const cardBal = cardBalance();
 
   const { start: periodStart, end: periodEnd, label: periodLabel } = getPeriodRange(overviewPeriod, overviewOffset);
   const periodEntries = entriesInRange(periodStart, periodEnd);
@@ -1312,6 +1380,7 @@ function render(){
         <div class="label">Осталось на руках (всего)</div>
         <div class="value" style="color:${net>=0?'var(--moss)':'var(--clay)'}">${fmt(net)}</div>
         <div class="cash-note">Наличными на руках (всего): ${fmt(cashBal)}</div>
+        <div class="cash-note">На карте (всего): ${fmt(cardBal)}</div>
       </div>
     </div>
 
@@ -1375,6 +1444,36 @@ function render(){
         <div class="pending-preview" id="pending-preview"></div>
         <button class="add-btn" style="background:var(--brass);" onclick="addPending()">Добавить в ожидание</button>
         ${state.pending.length > 0 ? `<button class="clear-pending-btn" onclick="clearAllPending()">Зарплата пришла — очистить список</button>` : ''}
+      </div>
+
+      <div class="section-title">Перевод карта ↔ нал</div>
+      <div class="pending-card">
+        <div class="form-row">
+          <input type="number" id="transfer-amount" placeholder="Сумма, ₽" value="${transferAmountVal}">
+          <select id="transfer-direction" onchange="render()">
+            <option value="card-to-cash" ${transferDirVal==='card-to-cash'?'selected':''}>С карты в нал</option>
+            <option value="cash-to-card" ${transferDirVal==='cash-to-card'?'selected':''}>С нала на карту</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <input type="date" id="transfer-date" value="${transferDateVal}">
+          <input type="text" id="transfer-note" placeholder="Заметка (напр. квартплата)" value="${transferNoteVal}">
+        </div>
+        <button class="add-btn" style="background:var(--navy);color:var(--paper);" onclick="makeTransfer()">Перевести</button>
+        ${recentTransfers.length > 0 ? `
+        <div class="transfer-list">
+          ${recentTransfers.slice(0,5).map(t => {
+            const td = new Date(t.date);
+            const dirLabel = t.method === 'card' ? 'Карта → Нал' : 'Нал → Карта';
+            return `<div class="pending-row">
+              <div class="pending-info">
+                <div class="pending-amt">${fmt(t.amount)}</div>
+                <div class="pending-note">${dirLabel}${t.note ? ' · ' + t.note : ''} · ${td.getDate()} ${monthNames[td.getMonth()].slice(0,3)}</div>
+              </div>
+              <button class="del" onclick="deleteEntry('${t.id}')">✕</button>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
       </div>
 
       <div class="form-row search-row">
