@@ -1734,7 +1734,7 @@ function renderEntryList(list, searchQ, kind){
       return `<li class="entry edit-row">
         <div class="form-row">
           <input type="number" id="edit-amount-${e.id}" value="${e.amount}" inputmode="decimal">
-          <select id="edit-cat-${e.id}" ${kind==='expense' ? `onchange="render()"` : ''}>${cats.map(c=>`<option value="${c}" ${c===e.category?'selected':''}>${c}</option>`).join('')}</select>
+          <select id="edit-cat-${e.id}" ${kind==='expense' ? `onchange="render()"` : ''}>${cats.map(c=>`<option value="${c}" ${c===editCatNow?'selected':''}>${c}</option>`).join('')}</select>
         </div>
         <div class="form-row">
           <input type="date" id="edit-date-${e.id}" value="${e.date.slice(0,10)}">
