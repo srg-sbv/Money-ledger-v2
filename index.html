@@ -22,6 +22,8 @@
     --line: #D8D0BE;
     --debt-card-bg: #2C3A4F;
     --debt-card-fg: #EDE7DA;
+    --debt-card-accent: #E4D2AC;
+    --debt-card-warn: #EEC4B0;
   }
 
   html[data-theme="dark"]{
@@ -123,6 +125,14 @@
     margin:22px 0 10px;
   }
   .section-title:first-child{margin-top:0;}
+  .pending-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    user-select:none;
+  }
+  .collapse-arrow{color:var(--ink-soft);font-size:11px;}
 
   .goal-card{
     background:var(--paper-raised);
@@ -175,11 +185,27 @@
   }
   .goal-edit input{
     flex:1;
+    min-width:0;
     font-size:13px;
     padding:8px 10px;
     border:1px solid var(--line);
     border-radius:4px;
     font-family:'Inter',sans-serif;
+    background:var(--paper-raised);
+    color:var(--ink);
+  }
+  .debt-edit-goal-btn{
+    background:none;
+    border:none;
+    color:inherit;
+    opacity:.7;
+    cursor:pointer;
+    font-size:12px;
+    padding:0 0 0 2px;
+  }
+  .debt-goal-edit .cancel-btn{
+    background:rgba(255,255,255,0.1);
+    flex:0 0 auto;
   }
   .goal-edit button{
     background:var(--ink);
@@ -213,7 +239,7 @@
     font-size:14px;
     font-weight:500;
     font-family:'Inter',sans-serif;
-    color:var(--brass-soft);
+    color:var(--debt-card-accent);
   }
   .debt-card .badge{
     font-size:10px;
@@ -257,14 +283,14 @@
   .debt-actions button{
     background:rgba(255,255,255,0.1);
     border:1px solid rgba(255,255,255,0.2);
-    color:var(--paper);
+    color:var(--debt-card-fg);
     border-radius:4px;
     padding:6px 9px;
     font-size:12px;
     cursor:pointer;
     font-family:'Inter',sans-serif;
   }
-  .debt-actions button.del{color:var(--clay-soft);}
+  .debt-actions button.del{color:var(--debt-card-warn);}
 
   .add-debt-card{
     background:var(--paper-raised);
@@ -285,6 +311,8 @@
     border-radius:4px;
     font-family:'Inter',sans-serif;
     background:var(--paper-raised);
+    color:var(--ink);
+    min-width:0;
   }
   .add-debt-card .name-input{flex:1.4;}
   .add-debt-card .amt-input{flex:1;}
@@ -350,7 +378,7 @@
     margin-bottom:8px;
   }
   .form-row:last-child{margin-bottom:0;}
-  .form-card input, .form-card select{
+  .form-card input, .form-card select, .templates-card input, .templates-card select{
     font-family:'Inter',sans-serif;
     font-size:14px;
     padding:9px 10px;
@@ -359,11 +387,15 @@
     background:var(--paper-raised);
     color:var(--ink);
     width:100%;
+    min-width:0;
+    box-sizing:border-box;
   }
   .form-card input[type="number"]{flex:1;}
   .form-card input[type="date"]{flex:1.6;}
   .form-card select{flex:1.4;}
   .form-card .note-row input{width:100%;}
+  .templates-card input[type="number"]{flex:1;}
+  .templates-card select{flex:1.4;}
   .add-btn{
     width:100%;
     padding:10px;
@@ -611,6 +643,21 @@
     gap:16px;
     margin-bottom:14px;
   }
+  .pie-wrap.compact{
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .pie-wrap.compact svg{margin:0 auto;}
+  .pie-wrap.compact .pie-legend{width:100%;}
+  .pie-wrap.compact .pie-legend-row{font-size:11px;margin-bottom:4px;}
+  .dual-pie-row{
+    display:flex;
+    gap:12px;
+    margin-bottom:4px;
+  }
+  .pie-col{flex:1;min-width:0;}
+  .pie-col-label{font-size:12px;font-weight:600;color:var(--ink-soft);text-align:center;margin-bottom:6px;}
   .pie-legend{flex:1;min-width:0;}
   .pie-legend-row{
     display:flex;
@@ -635,14 +682,14 @@
     margin-bottom:8px;
   }
   .debt-warn{
-    color:var(--clay-soft);
+    color:var(--debt-card-warn);
     font-weight:600;
     font-size:11px;
   }
   .debt-week-goal .goal-edit input{
     background:rgba(255,255,255,0.08);
     border-color:rgba(255,255,255,0.2);
-    color:var(--paper);
+    color:var(--debt-card-fg);
   }
   .debt-forecast{
     font-size:11.5px;
@@ -724,6 +771,7 @@
     background:var(--paper-raised);
     color:var(--ink);
     width:100%;
+    min-width:0;
   }
   .pending-card .form-row input{flex:1;}
   .pending-card .form-row input[type="date"]{flex:1.3;}
@@ -759,8 +807,8 @@
 </div>
 
 <script>
-const INCOME_CATS = ["Зарплата","Ночная подработка","Чаевые","Продажа вещей","Подарки","Другое"];
-const EXPENSE_CATS = ["Обязательные","Долг","Продукты","Кафе-фастфуд","Обслуживание техники","Транспорт","Здоровье","Одежда и обувь","Развлечения","Другое","Спонтанные"];
+const INCOME_CATS = ["Зарплата","Чаевые","Продажа вещей","Подарки","Другое"];
+const EXPENSE_CATS = ["Обязательные","Квартплата","Долг","Продукты","Кафе-фастфуд","Обслуживание техники","Гаджеты","Транспорт","Здоровье","Одежда и обувь","Развлечения","Другое","Спонтанные"];
 
 let state = {
   entries: [],         // {id, type, amount, category, note, date, debtId, method}
@@ -774,11 +822,14 @@ let state = {
 
 let activeTab = 'income';
 let editingEntryId = null;
+let editingDebtGoalId = null;
 let overviewPeriod = 'month';
 let overviewOffset = 0;
 let incomeSearch = '';
 let expenseSearch = '';
 let currentTheme = 'light';
+let pendingCollapsed = true;
+let budgetsCollapsed = true;
 
 function loadTheme(){
   try{
@@ -786,6 +837,29 @@ function loadTheme(){
     if(saved === 'dark') currentTheme = 'dark';
   }catch(e){}
   document.documentElement.setAttribute('data-theme', currentTheme);
+}
+
+function loadPendingCollapsed(){
+  try{
+    const saved = localStorage.getItem('money-ledger-pending-collapsed');
+    if(saved !== null) pendingCollapsed = saved === '1';
+  }catch(e){}
+  try{
+    const savedB = localStorage.getItem('money-ledger-budgets-collapsed');
+    if(savedB !== null) budgetsCollapsed = savedB === '1';
+  }catch(e){}
+}
+
+function togglePendingCollapsed(){
+  pendingCollapsed = !pendingCollapsed;
+  try{ localStorage.setItem('money-ledger-pending-collapsed', pendingCollapsed ? '1' : '0'); }catch(e){}
+  render();
+}
+
+function toggleBudgetsCollapsed(){
+  budgetsCollapsed = !budgetsCollapsed;
+  try{ localStorage.setItem('money-ledger-budgets-collapsed', budgetsCollapsed ? '1' : '0'); }catch(e){}
+  render();
 }
 
 function makeTransfer(){
@@ -1147,6 +1221,27 @@ function onExpenseCatChange(){
   if(el) el.focus();
 }
 
+function startEditDebtGoal(id){
+  editingDebtGoalId = id;
+  render();
+}
+
+function cancelEditDebtGoal(){
+  editingDebtGoalId = null;
+  render();
+}
+
+function saveDebtGoal(id){
+  const input = document.getElementById('debt-goal-input-'+id);
+  const val = parseFloat(input.value);
+  if(!val || val <= 0){ input.focus(); return; }
+  const debt = state.debts.find(d => d.id === id);
+  if(debt) debt.goal = val;
+  editingDebtGoalId = null;
+  saveState();
+  render();
+}
+
 function addDebt(){
   const nameEl = document.getElementById('new-debt-name');
   const amtEl = document.getElementById('new-debt-amount');
@@ -1410,7 +1505,11 @@ function render(){
         <button class="add-btn income-btn" onclick="addEntry('income')">Записать доход</button>
       </div>
 
-      <div class="section-title">Ожидается к начислению</div>
+      <div class="section-title pending-header" onclick="togglePendingCollapsed()">
+        <span>Ожидается к начислению${pendingTotal > 0 ? ' · ' + fmt(pendingTotal) : ''}</span>
+        <span class="collapse-arrow">${pendingCollapsed ? '▸' : '▾'}</span>
+      </div>
+      ${!pendingCollapsed ? `
       <div class="pending-card">
         <div class="pending-total">Всего в ожидании: ${fmt(pendingTotal)}</div>
 
@@ -1445,6 +1544,7 @@ function render(){
         <button class="add-btn" style="background:var(--brass);" onclick="addPending()">Добавить в ожидание</button>
         ${state.pending.length > 0 ? `<button class="clear-pending-btn" onclick="clearAllPending()">Зарплата пришла — очистить список</button>` : ''}
       </div>
+      ` : ''}
 
       <div class="section-title">Перевод карта ↔ нал</div>
       <div class="pending-card">
@@ -1575,9 +1675,18 @@ function render(){
         <div class="stat expense"><div class="label">Расход за период</div><div class="value">${fmt(periodExpense)}</div></div>
       </div>
 
+      <div class="dual-pie-row">
+        <div class="pie-col">
+          <div class="pie-col-label">Расходы</div>
+          ${renderPieChart(periodExpenseCatTotals, true)}
+        </div>
+        <div class="pie-col">
+          <div class="pie-col-label">Доходы</div>
+          ${renderPieChart(periodIncomeCatTotals, true, INCOME_PIE_COLORS)}
+        </div>
+      </div>
       <div class="cat-breakdown">
         <h3>Куда уходит</h3>
-        ${renderPieChart(periodExpenseCatTotals)}
         ${renderBars(periodExpenseCatTotals, periodExpense, '')}
       </div>
       <div class="cat-breakdown">
@@ -1585,7 +1694,11 @@ function render(){
         ${renderBars(periodIncomeCatTotals, periodIncome, 'inc')}
       </div>
 
-      <div class="section-title">Бюджеты по категориям (необязательно)</div>
+      <div class="section-title pending-header" onclick="toggleBudgetsCollapsed()">
+        <span>Бюджеты по категориям (необязательно)</span>
+        <span class="collapse-arrow">${budgetsCollapsed ? '▸' : '▾'}</span>
+      </div>
+      ${!budgetsCollapsed ? `
       <div class="budgets-card">
         ${EXPENSE_CATS.map(cat => {
           const capVal = state.categoryCaps[cat] || 0;
@@ -1602,6 +1715,7 @@ function render(){
           </div>`;
         }).join('')}
       </div>
+      ` : ''}
 
       <div class="backup-card">
         <p>Вся база (доходы, расходы, долги, цели) — в один файл. Сохрани его куда угодно: в облако, на флешку, отправь себе. Если что-то случится с кэшем браузера, загрузишь этот файл обратно и всё восстановится.</p>
@@ -1664,9 +1778,16 @@ function renderDebtCard(debt){
       <div class="amount">${fmt(remaining)}</div>
       <div class="debt-bar-track"><div class="debt-bar-fill" style="width:${pct}%"></div></div>
       <div class="debt-meta">
-        <span>Погашено: ${fmt(debt.paid)} из ${fmt(debt.goal)}</span>
+        <span>Погашено: ${fmt(debt.paid)} из ${fmt(debt.goal)} <button class="debt-edit-goal-btn" onclick="startEditDebtGoal('${debt.id}')" title="Изменить сумму долга, напр. добавить набежавшие проценты">✎</button></span>
         <span>${pct}%</span>
       </div>
+      ${editingDebtGoalId === debt.id ? `
+      <div class="goal-edit debt-goal-edit">
+        <input type="number" id="debt-goal-input-${debt.id}" value="${debt.goal}" placeholder="Новая сумма долга, ₽">
+        <button onclick="saveDebtGoal('${debt.id}')">Сохранить</button>
+        <button onclick="cancelEditDebtGoal()" class="cancel-btn">✕</button>
+      </div>
+      ` : ''}
       ${remaining > 0 ? `
       <div class="debt-week-goal">
         <div class="debt-week-row">
@@ -1701,8 +1822,10 @@ function renderBars(totals, sum, cls){
 }
 
 const PIE_COLORS = ['#A9573F','#A9793B','#5F7A5A','#2C3A4F','#8B6F47','#6B4C3A','#4A5D23','#7A5C7E'];
+const INCOME_PIE_COLORS = ['#5F7A5A','#3E8272','#7FA653','#2E6B5E','#8FB088','#4C7A6E','#6B9C4E','#2A5C4A'];
 
-function renderPieChart(totals){
+function renderPieChart(totals, compact, palette){
+  const colors = palette || PIE_COLORS;
   const data = Object.entries(totals).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]);
   if(data.length === 0) return '';
   const sum = data.reduce((s,[,v])=>s+v,0);
@@ -1710,17 +1833,18 @@ function renderPieChart(totals){
   let offset = 0;
   const segments = data.map(([cat,val], i) => {
     const len = (val/sum)*circumference;
-    const seg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${PIE_COLORS[i%PIE_COLORS.length]}" stroke-width="22" stroke-dasharray="${len} ${circumference-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    const seg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[i%colors.length]}" stroke-width="22" stroke-dasharray="${len} ${circumference-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
     offset += len;
     return seg;
   }).join('');
   const legend = data.map(([cat,val], i) => `
     <div class="pie-legend-row">
-      <span class="pie-dot" style="background:${PIE_COLORS[i%PIE_COLORS.length]}"></span>
+      <span class="pie-dot" style="background:${colors[i%colors.length]}"></span>
       <span class="pie-legend-label">${cat}</span>
       <span class="pie-legend-val">${Math.round(val/sum*100)}%</span>
     </div>`).join('');
-  return `<div class="pie-wrap"><svg viewBox="0 0 140 140" width="140" height="140">${segments}</svg><div class="pie-legend">${legend}</div></div>`;
+  const size = compact ? 110 : 140;
+  return `<div class="pie-wrap${compact ? ' compact' : ''}"><svg viewBox="0 0 140 140" width="${size}" height="${size}">${segments}</svg><div class="pie-legend">${legend}</div></div>`;
 }
 
 function renderEntryList(list, searchQ, kind){
@@ -1834,6 +1958,7 @@ function importData(event){
 }
 
 loadTheme();
+loadPendingCollapsed();
 loadState();
 </script>
 </body>
