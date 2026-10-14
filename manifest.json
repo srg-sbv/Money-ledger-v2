@@ -6,8 +6,8 @@
   "start_url": "/Money-ledger-v2/",
   "scope": "/Money-ledger-v2/",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#121212",
+  "background_color": "#161510",
+  "theme_color": "#161510",
   "orientation": "portrait-primary",
   "icons": [
     {
