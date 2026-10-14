@@ -1,22 +1,21 @@
-const CACHE_NAME = 'ledger-cache-v1';
-const urlsToCache = [
-  '/Money-ledger-v2/',
-  '/Money-ledger-v2/index.html',
-  '/Money-ledger-v2/manifest.json'
-];
+const CACHE_NAME = 'ledger-cache-v2';
 
-// Установка и кэширование базовых файлов
 self.addEventListener('install', event => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.keys().then(keys => Promise.all(
+      keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      })
+    ))
   );
 });
 
-// Перехват запросов для работы офлайн
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
