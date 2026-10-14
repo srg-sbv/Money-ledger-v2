@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<link rel="manifest" href="/Money-ledger-v2/manifest.json">
+<meta name="theme-color" content="#121212">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Money Ledger</title>
@@ -2431,6 +2433,15 @@ function importData(event){
 loadTheme();
 loadCollapsedStates();
 loadState();
+
+// Регистрация Service Worker для PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/Money-ledger-v2/sw.js')
+      .then(reg => console.log('SW зарегистрирован!', reg.scope))
+      .catch(err => console.log('Ошибка SW:', err));
+  });
+}
 </script>
 </body>
 </html>
