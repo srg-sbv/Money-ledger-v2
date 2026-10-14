@@ -2433,6 +2433,9 @@ function importData(event){
 }
 
 loadTheme();
+// Принудительно красим шторку браузера в цвет фона сайта
+const bgColor = getComputedStyle(document.body).backgroundColor;
+document.querySelectorAll('meta[name="theme-color"]').forEach(el => el.setAttribute('content', bgColor));
 loadCollapsedStates();
 loadState();
 
