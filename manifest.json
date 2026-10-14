@@ -2,7 +2,7 @@
   "name": "Money Ledger v2",
   "short_name": "Ledger",
   "description": "Личный финансовый гроссбух",
-  "start_url": "/Money-ledger-v2/index.html",
+  "start_url": "/Money-ledger-v2/",
   "scope": "/Money-ledger-v2/",
   "display": "standalone",
   "background_color": "#121212",
@@ -10,10 +10,16 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%23121212'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-weight='bold' font-size='320' fill='%234ade80'>$</text></svg>",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://flaticon.com",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
