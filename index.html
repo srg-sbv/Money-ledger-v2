@@ -2460,27 +2460,32 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('Ошибка SW:', err));
   });
 }
-// === ПРОКАЧКА MONEY LEDGER V2 ===
-window.addEventListener('DOMContentLoaded', () => {
-  
-  // 1. ЧИНИМ ЦВЕТ ТЕКСТА НА ЗОЛОТИСТЫХ КНОПКАХ
-  const fixButtons = () => {
+// === НЕУБИВАЕМАЯ ПРОКАЧКА MONEY LEDGER V2 ===
+(function() {
+  // 1. ЖЕСТКИЙ CSS ДЛЯ КНОПОК (не слетит при переключении вкладок)
+  const style = document.createElement('style');
+  style.textContent = `
+    button { color: inherit; }
+  `;
+  document.head.appendChild(style);
+
+  // 2. ФУНКЦИЯ ПОДКРАСКИ КНОПОК И ПОДКЛЮЧЕНИЯ КАЛЬКУЛЯТОРА
+  const applyUpgrades = () => {
+    // Красим золотистые кнопки
     document.querySelectorAll('button').forEach(btn => {
       const txt = btn.textContent || '';
       if (txt.includes('Добавить в ожидание') || txt.includes('Добавить долг') || txt.includes('Экспорт в Excel')) {
-        btn.style.setProperty('color', '#161510', 'important');
-        btn.style.setProperty('font-weight', '600', 'important');
+        if (btn.style.color !== 'rgb(22, 21, 16)') {
+          btn.style.setProperty('color', '#161510', 'important');
+          btn.style.setProperty('font-weight', '600', 'important');
+        }
       }
     });
-  };
-  fixButtons();
 
-  // 2. УМНЫЙ КАЛЬКУЛЯТОР ВО ВСЕХ ПОЛЯХ СУММ (доходы, расходы, ожидание, долги)
-  const enableCalc = () => {
+    // Подключаем калькулятор ко всем полям сумм
     document.querySelectorAll('input[placeholder*="Сумма"], input[placeholder*="Цель"]').forEach(inp => {
       if (inp.dataset.calcReady) return;
       inp.dataset.calcReady = '1';
-      // Разрешаем ввод знаков + и - на мобильной клавиатуре
       inp.setAttribute('type', 'text');
       inp.setAttribute('inputmode', 'text');
 
@@ -2496,48 +2501,20 @@ window.addEventListener('DOMContentLoaded', () => {
           } catch (e) {}
         }
       };
-      // Считает само при выходе из поля или нажатии Enter
       inp.addEventListener('blur', calcNow);
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') calcNow(); });
     });
+
+    // Возвращаем блок "Мне должны", если вкладка перерисовалась
+    initDebtors();
   };
-  enableCalc();
 
-  // 3. БЫСТРАЯ КОРРЕКТИРОВКА ЗАРПЛАТЫ В ОЖИДАНИИ (по клику на запись)
-  document.body.addEventListener('click', (e) => {
-    const row = e.target.closest('div, li');
-    if (!row || e.target.tagName === 'BUTTON' || e.target.textContent === '✕' || e.target.textContent === '×') return;
-    
-    // Проверяем, что кликнули внутри блока "Всего в ожидании"
-    const parentBox = row.parentElement;
-    if (parentBox && parentBox.innerText.includes('Всего в ожидании:')) {
-      const text = row.innerText.split('\n');
-      if (text.length >= 1 && text[0].includes('₽')) {
-        const sum = text[0].replace(/[^0-9.,]/g, '').trim();
-        const note = text[1] ? text[1].split('·')[0].trim() : '';
-        
-        const sumInput = parentBox.querySelector('input[placeholder*="Сумма"]');
-        const noteInput = parentBox.querySelector('input[placeholder*="Заметка"]');
-        const delBtn = row.querySelector('button, [onclick]');
-        
-        if (sumInput && sum) {
-          if (confirm(`Изменить запись на ${sum} ₽? Старая строка удалится, а данные перенесутся в поле ввода.`)) {
-            sumInput.value = sum;
-            if (noteInput) noteInput.value = note;
-            if (delBtn) delBtn.click();
-            sumInput.focus();
-          }
-        }
-      }
-    }
-  });
-
-  // 4. ОТДЕЛЬНЫЙ МИНИ-БЛОК "МНЕ ДОЛЖНЫ" (исправленная версия)
+  // 3. БЛОК "МНЕ ДОЛЖНЫ"
   const initDebtors = () => {
     if (document.getElementById('my-debtors-box')) return;
     const allButtons = Array.from(document.querySelectorAll('button'));
     const addDebtBtn = allButtons.find(b => b.textContent.includes('Добавить долг'));
-    if (!addDebtBtn) return;
+    if (!addDebtBtn || addDebtBtn.offsetParent === null) return; // Ждем пока вкладка станет видимой
 
     const container = addDebtBtn.parentElement;
     const box = document.createElement('div');
@@ -2572,11 +2549,15 @@ window.addEventListener('DOMContentLoaded', () => {
           'Записать должника' +
         '</button>';
 
-      enableCalc();
-
       box.querySelector('#add-deb-btn').onclick = () => {
         const name = box.querySelector('#deb-name').value.trim() || 'Должник';
-        const sum = parseFloat(box.querySelector('#deb-sum').value);
+        const sumInput = box.querySelector('#deb-sum');
+        // Считаем сумму, если там пример вроде 500+200
+        let val = sumInput.value.replace(/\s+/g, '').replace(',', '.');
+        if (/^[0-9.+\-*\/()]+\$/.test(val) && /[+\-*\/]/.test(val)) {
+          try { val = Function('"use strict";return (' + val + ')')(); } catch(e){}
+        }
+        const sum = parseFloat(val);
         if (!sum) return;
         const d = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
         list.push({ name: name, sum: sum, date: d });
@@ -2597,8 +2578,48 @@ window.addEventListener('DOMContentLoaded', () => {
     container.parentNode.insertBefore(box, container.nextSibling);
     renderDebtors();
   };
-  initDebtors();
-});
+
+  // 4. КОРРЕКТИРОВКА ЗАРПЛАТЫ В ОЖИДАНИИ ПО КЛИКУ
+  document.body.addEventListener('click', (e) => {
+    const row = e.target.closest('div, li');
+    if (!row || e.target.tagName === 'BUTTON' || e.target.textContent === '✕' || e.target.textContent === '×') return;
+    const parentBox = row.parentElement;
+    if (parentBox && parentBox.innerText.includes('Всего в ожидании:')) {
+      const text = row.innerText.split('\n');
+      if (text.length >= 1 && text[0].includes('₽')) {
+        const sum = text[0].replace(/[^0-9.,]/g, '').trim();
+        const note = text[1] ? text[1].split('·')[0].trim() : '';
+        const sumInput = parentBox.querySelector('input[placeholder*="Сумма"]');
+        const noteInput = parentBox.querySelector('input[placeholder*="Заметка"]');
+        const delBtn = row.querySelector('button, [onclick]');
+        if (sumInput && sum) {
+          if (confirm('Изменить запись на ' + sum + ' ₽? Старая строка удалится, а данные перенесутся в поле ввода.')) {
+            sumInput.value = sum;
+            if (noteInput) noteInput.value = note;
+            if (delBtn) delBtn.click();
+            sumInput.focus();
+          }
+        }
+      }
+    }
+  });
+
+  // 5. НАБЛЮДАТЕЛЬ: СЛЕДИТ ЗА ПЕРЕКЛЮЧЕНИЕМ ВКЛАДОК И ВОЗВРАЩАЕТ ВСЕ НА МЕСТО
+  const observer = new MutationObserver(() => {
+    applyUpgrades();
+  });
+  
+  const start = () => {
+    applyUpgrades();
+    observer.observe(document.body, { childList: true, subtree: true });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
 </script>
 </body>
 </html>
