@@ -2532,18 +2532,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 4. ОТДЕЛЬНЫЙ МИНИ-БЛОК "МНЕ ДОЛЖНЫ" (чтобы не путать с зарплатой)
-  const initDebtors = () => {
-    if (document.getElementById('my-debtors-box')) return;
-    const allButtons = Array.from(document.querySelectorAll('button'));
-    const addDebtBtn = allButtons.find(b => b.textContent.includes('Добавить долг'));
-    if (!addDebtBtn) return;
-
-    const container = addDebtBtn.parentElement;
-    const box = document.createElement('div');
-    box.id = 'my-debtors-box';
-    box.style.cssText = 'margin-top: 24px; padding: 16px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);';
-    
     // 4. ОТДЕЛЬНЫЙ МИНИ-БЛОК "МНЕ ДОЛЖНЫ" (исправленная версия)
   const initDebtors = () => {
     if (document.getElementById('my-debtors-box')) return;
@@ -2610,7 +2598,72 @@ window.addEventListener('DOMContentLoaded', () => {
     renderDebtors();
   };
   initDebtors();
-});
+// 4. ОТДЕЛЬНЫЙ МИНИ-БЛОК "МНЕ ДОЛЖНЫ" (исправленная версия)
+  const initDebtors = () => {
+    if (document.getElementById('my-debtors-box')) return;
+    const allButtons = Array.from(document.querySelectorAll('button'));
+    const addDebtBtn = allButtons.find(b => b.textContent.includes('Добавить долг'));
+    if (!addDebtBtn) return;
+
+    const container = addDebtBtn.parentElement;
+    const box = document.createElement('div');
+    box.id = 'my-debtors-box';
+    box.style.cssText = 'margin-top: 24px; padding: 16px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);';
+    
+    const renderDebtors = () => {
+      const list = JSON.parse(localStorage.getItem('ledger_owed_to_me') || '[]');
+      const total = list.reduce((acc, item) => acc + Number(item.sum), 0);
+      
+      let itemsHtml = '';
+      list.forEach((item, idx) => {
+        itemsHtml += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06);">' +
+          '<div>' +
+            '<div style="font-weight:600;">' + Number(item.sum).toLocaleString('ru-RU') + ' ₽</div>' +
+            '<div style="font-size:13px; opacity:0.7;">' + item.name + ' · ' + item.date + '</div>' +
+          '</div>' +
+          '<button data-idx="' + idx + '" class="repay-btn" style="background:rgba(163,184,153,0.15); color:#a3b899; border:1px solid #a3b899; border-radius:6px; padding:6px 10px; font-size:13px; cursor:pointer;">Вернул ✓</button>' +
+        '</div>';
+      });
+
+      box.innerHTML = 
+        '<div style="font-weight:600; font-size:16px; margin-bottom:12px; color:#a3b899;">' +
+          '🤝 Мне должны (Всего: ' + total.toLocaleString('ru-RU') + ' ₽)' +
+        '</div>' +
+        '<div id="debtors-list" style="margin-bottom:12px;">' + itemsHtml + '</div>' +
+        '<div style="display:flex; gap:8px; margin-bottom:10px;">' +
+          '<input id="deb-name" placeholder="Кто должен (напр. Илхом)" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:inherit;">' +
+          '<input id="deb-sum" placeholder="Сумма, ₽" style="width:110px; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:inherit;">' +
+        '</div>' +
+        '<button id="add-deb-btn" style="width:100%; padding:12px; border-radius:8px; background:#a3b899; color:#161510; font-weight:600; border:none; cursor:pointer;">' +
+          'Записать должника' +
+        '</button>';
+
+      enableCalc();
+
+      box.querySelector('#add-deb-btn').onclick = () => {
+        const name = box.querySelector('#deb-name').value.trim() || 'Должник';
+        const sum = parseFloat(box.querySelector('#deb-sum').value);
+        if (!sum) return;
+        const d = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        list.push({ name: name, sum: sum, date: d });
+        localStorage.setItem('ledger_owed_to_me', JSON.stringify(list));
+        renderDebtors();
+      };
+
+      box.querySelectorAll('.repay-btn').forEach(btn => {
+        btn.onclick = () => {
+          const idx = Number(btn.getAttribute('data-idx'));
+          list.splice(idx, 1);
+          localStorage.setItem('ledger_owed_to_me', JSON.stringify(list));
+          renderDebtors();
+        };
+      });
+    };
+
+    container.parentNode.insertBefore(box, container.nextSibling);
+    renderDebtors();
+  };
+  initDebtors();
 </script>
 </body>
 </html>
